@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using CreekRiver.Models.DTOs;
+using System.Reflection.Metadata.Ecma335;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,36 @@ app.MapGet("/api/campsites", (CreekRiverDbContext db) =>
         ImageUrl = c.ImageUrl,
         CampsiteTypeId = c.CampsiteTypeId
     }).ToList();
+});
+
+app.MapGet("/api/campsites/{id}", (CreekRiverDbContext db, int id) =>
+{
+    CampsiteDTO campsiteDTO = null;
+
+    try
+    {
+        campsiteDTO = db.Campsites
+            .Include(c => c.CampsiteType)
+            .Select(c => new CampsiteDTO
+            {
+                Id = c.Id,
+                Nickname = c.Nickname,
+                CampsiteTypeId = c.CampsiteTypeId,
+                CampsiteType = new CampsiteTypeDTO
+                {
+                    Id = c.CampsiteType.Id,
+                    CampsiteTypeName = c.CampsiteType.CampsiteTypeName,
+                    FeePerNight = c.CampsiteType.FeePerNight,
+                    MaxReservationDays = c.CampsiteType.MaxReservationDays
+                }
+            }).Single(c => c.Id == id);
+    }
+    catch (InvalidOperationException)
+    {
+        return Results.NotFound();
+    }
+    
+    return Results.Ok(campsiteDTO);
 });
 
 app.Run();
