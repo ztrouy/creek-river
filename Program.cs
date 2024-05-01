@@ -2,6 +2,7 @@ using CreekRiver.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
+using CreekRiver.Models.DTOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-
+app.MapGet("/api/campsites", (CreekRiverDbContext db) =>
+{
+    return db.Campsites.Select(c => new CampsiteDTO
+    {
+        Id = c.Id,
+        Nickname = c.Nickname,
+        ImageUrl = c.ImageUrl,
+        CampsiteTypeId = c.CampsiteTypeId
+    }).ToList();
+});
 
 app.Run();
